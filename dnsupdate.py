@@ -10,7 +10,9 @@ def get_settings():
     mail = os.environ.get('EMAIL')
     token = os.environ.get('TOKEN')
     domain = os.environ.get('DOMAIN')
-    hostname = socket.gethostname()
+    hostname = os.environ.get('HOST')
+    if not hostname:
+      hostname = socket.gethostname()
     return (mail, token, domain, hostname)
 
 def get_current_ip():
