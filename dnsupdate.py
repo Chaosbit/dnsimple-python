@@ -1,19 +1,13 @@
 import os
 import socket
 import urllib2
+
+from argparse import ArgumentParser
+
 from dnsimple import DNSimple
 from dnsimple.dnsimple import DNSimpleException
 
 IP_PROVIDER='http://icanhazip.com/'
-
-def get_settings():
-    mail = os.environ.get('EMAIL')
-    token = os.environ.get('TOKEN')
-    domain = os.environ.get('DOMAIN')
-    hostname = os.environ.get('HOST')
-    if not hostname:
-      hostname = socket.gethostname()
-    return (mail, token, domain, hostname)
 
 def get_current_ip():
     conn = urllib2.urlopen(IP_PROVIDER)
@@ -40,7 +34,7 @@ def update_dynamic_ip(mail, token, host, domain, address):
                     record_data = { 'content' : address, 'record_type' : 'A' }
                     dns.update_record(domain, record_id, record_data)
                     response = "Updating host {0}.{1} with id {2} to address '{3}' from address '{4}'".format(record_name, domain, record_id, address, record_content)
-                    found = True
+                    found = True)
         if not found:
           record = { "name" : host, "record_type" : "A", "content" : address, "ttl" : 900 }
           dns.add_record(domain, record)
@@ -49,8 +43,7 @@ def update_dynamic_ip(mail, token, host, domain, address):
         response = "Error when updating dynamic address ({0})".format(e)
     return response
 
-def main():
-    (mail, token, domain, host) = get_settings()
+def main(mail, token, domain, host):
     if not host == "changeme":
       address = get_current_ip()
       response = update_dynamic_ip(mail, token, host, domain, address)
@@ -58,5 +51,12 @@ def main():
         print response
 
 if __name__ == "__main__":
+    parser = ArgumentParser()
 
-    main()
+    parser.add_argument('-m', '--mail', dest='mail', action='store', help='Mailadress for the login', required=True)
+    parser.add_argument('-t', '--token', dest='token', action='store', help='Token for the login', required=True)
+    parser.add_argument('-d', '--domain', dest='domain', action='store', help='Domain to update', required=True)
+    parser.add_argument('-u', '--target-host', dest='host', action='store', help='Host destination for the domain', required=True)
+
+    args = parser.parse_args()
+    main(args.mail, args.token, args.domain, args.host)
